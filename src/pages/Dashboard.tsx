@@ -23,19 +23,21 @@ interface Prediction {
 export default function Dashboard() {
     const [selectedRace, setSelectedRace] = useState<number | null>(null)
 
-    const { data: health } = useQuery('health', () =>
-        api.get('/health').then(r => r.data).catch(() => ({ status: 'offline' }))
-    )
+    const { data: health } = useQuery({
+        queryKey: ['health'],
+        queryFn: () => api.get('/health').then(r => r.data).catch(() => ({ status: 'offline' }))
+    })
 
-    const { data: races } = useQuery('races', () =>
-        api.get('/data/races?year=2025').then(r => r.data).catch(() => [])
-    )
+    const { data: races } = useQuery({
+        queryKey: ['races'],
+        queryFn: () => api.get('/data/races?year=2025').then(r => r.data).catch(() => [])
+    })
 
-    const { data: predictions } = useQuery(
-        ['predictions', selectedRace],
-        () => api.get(`/predict/race/${selectedRace}`).then(r => r.data),
-        { enabled: !!selectedRace }
-    )
+    const { data: predictions } = useQuery({
+        queryKey: ['predictions', selectedRace],
+        queryFn: () => api.get(`/predict/race/${selectedRace}`).then(r => r.data),
+        enabled: !!selectedRace
+    })
 
     const isBackendOnline = health?.status === 'operational' || health?.status === 'healthy'
 
@@ -94,8 +96,8 @@ export default function Dashboard() {
                         key={race.race_id}
                         onClick={() => setSelectedRace(race.race_id)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${selectedRace === race.race_id
-                                ? 'bg-red-600 text-white shadow-lg shadow-red-600/25'
-                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                            ? 'bg-red-600 text-white shadow-lg shadow-red-600/25'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                             }`}
                     >
                         {race.name}
@@ -126,14 +128,14 @@ export default function Dashboard() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.15 }}
                                 className={`relative bg-slate-900/80 border rounded-xl p-6 ${index === 0 ? 'border-yellow-500/50 md:scale-105 md:-translate-y-4' :
-                                        index === 1 ? 'border-gray-400/50' :
-                                            'border-orange-700/50'
+                                    index === 1 ? 'border-gray-400/50' :
+                                        'border-orange-700/50'
                                     }`}
                             >
                                 {/* Position Badge */}
                                 <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold ${index === 0 ? 'bg-yellow-500 text-black' :
-                                        index === 1 ? 'bg-gray-400 text-black' :
-                                            'bg-orange-700 text-white'
+                                    index === 1 ? 'bg-gray-400 text-black' :
+                                        'bg-orange-700 text-white'
                                     }`}>
                                     {index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'}
                                 </div>
@@ -162,8 +164,8 @@ export default function Dashboard() {
                                     <div className="flex items-center justify-center gap-2 mt-3">
                                         <Zap className="w-4 h-4 text-yellow-500" />
                                         <span className={`text-xs uppercase tracking-wider ${pred.confidence_tier === 'high' ? 'text-green-400' :
-                                                pred.confidence_tier === 'medium' ? 'text-yellow-400' :
-                                                    'text-slate-400'
+                                            pred.confidence_tier === 'medium' ? 'text-yellow-400' :
+                                                'text-slate-400'
                                             }`}>
                                             {pred.confidence_tier} Confidence
                                         </span>
@@ -193,4 +195,3 @@ export default function Dashboard() {
         </div>
     )
 }
-
