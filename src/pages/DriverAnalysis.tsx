@@ -4,13 +4,32 @@ import { Users, TrendingUp, Award } from 'lucide-react'
 import { api } from '../lib/api'
 
 export default function DriverAnalysis() {
-    const { data: drivers } = useQuery('all-drivers', () =>
-        api.get('/data/drivers').then(r => r.data)
-    )
+    // Remove .then(r => r.data) - api.get already returns parsed JSON
+    const { data: drivers, isLoading: driversLoading, error: driversError } = useQuery({
+        queryKey: ['all-drivers'],
+        queryFn: () => api.get('/data/drivers')
+    })
 
-    const { data: standings } = useQuery('standings-2025', () =>
-        api.get('/data/standings/2025').then(r => r.data)
-    )
+    const { data: standings, isLoading: standingsLoading, error: standingsError } = useQuery({
+        queryKey: ['standings-2025'],
+        queryFn: () => api.get('/data/standings/2025')
+    })
+
+    if (driversLoading || standingsLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-slate-400">Loading driver data...</div>
+            </div>
+        )
+    }
+
+    if (driversError || standingsError) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-red-400">Failed to load driver data. Please try again later.</div>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-8">
@@ -26,7 +45,7 @@ export default function DriverAnalysis() {
             </motion.div>
 
             {/* Standings Table */}
-            <div className="glass-panel p-6">
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-xl p-6">
                 <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                     <Award className="text-yellow-500" />
                     2025 Championship Standings
@@ -71,7 +90,7 @@ export default function DriverAnalysis() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.1 }}
-                        className="glass-panel p-6 hover:border-red-500/50 transition-colors"
+                        className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-xl p-6 hover:border-red-500/50 transition-colors"
                     >
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center">

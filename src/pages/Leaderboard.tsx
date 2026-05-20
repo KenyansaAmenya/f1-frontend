@@ -4,9 +4,35 @@ import { Trophy, Medal, TrendingUp } from 'lucide-react'
 import { api } from '../lib/api'
 
 export default function Leaderboard() {
-    const { data: standings } = useQuery('leaderboard-2025', () =>
-        api.get('/data/standings/2025').then(r => r.data)
-    )
+    // Remove .then(r => r.data) - api.get already returns parsed JSON
+    const { data: standings, isLoading, error } = useQuery({
+        queryKey: ['leaderboard-2025'],
+        queryFn: () => api.get('/data/standings/2025')
+    })
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-slate-400">Loading standings...</div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-red-400">Failed to load standings. Please try again later.</div>
+            </div>
+        )
+    }
+
+    if (!standings || standings.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-slate-400">No standings data available.</div>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-8">
@@ -31,6 +57,7 @@ export default function Leaderboard() {
                     const colors = ['bg-slate-400', 'bg-yellow-500', 'bg-orange-600']
                     const medals = [Medal, Trophy, Medal]
                     const MedalIcon = medals[idx]
+                    const position = idx === 0 ? 2 : idx === 1 ? 1 : 3
 
                     return (
                         <motion.div
@@ -47,7 +74,7 @@ export default function Leaderboard() {
                                     <div className="text-sm opacity-80">{driver.total_points} pts</div>
                                 </div>
                                 <div className="absolute -top-4 w-8 h-8 bg-white rounded-full flex items-center justify-center font-bold text-slate-900">
-                                    {idx + 1}
+                                    {position}
                                 </div>
                             </div>
                         </motion.div>
@@ -56,7 +83,7 @@ export default function Leaderboard() {
             </div>
 
             {/* Full Table */}
-            <div className="glass-panel p-6">
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-xl p-6">
                 <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                     <TrendingUp className="text-red-500" />
                     Full Standings
