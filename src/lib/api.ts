@@ -33,7 +33,7 @@ class ApiClient {
     }
 
     const response = await fetch(url, { ...options, headers });
-    
+
     if (response.status === 401) {
       this.clearToken();
       if (typeof window !== 'undefined') {
@@ -46,29 +46,33 @@ class ApiClient {
   }
 
   async get(endpoint: string) {
-    return this.request(endpoint);
+    const response = await this.request(endpoint);
+    return response.json();
   }
 
   async post(endpoint: string, data: any) {
-    return this.request(endpoint, {
+    const response = await this.request(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return response.json();
   }
 
   async put(endpoint: string, data: any) {
-    return this.request(endpoint, {
+    const response = await this.request(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+    return response.json();
   }
 
   async delete(endpoint: string) {
-    return this.request(endpoint, {
+    const response = await this.request(endpoint, {
       method: 'DELETE',
     });
+    return response.json();
   }
 }
 
 export const apiClient = new ApiClient();
-export const api = apiClient; // For backward compatibility
+export const api = apiClient;

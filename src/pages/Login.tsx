@@ -17,15 +17,21 @@ export default function Login() {
         setError('')
 
         try {
-            const response = await api.post('/auth/login', { username, password })
-            const { access_token, refresh_token } = response.data
+            // Now response is already parsed JSON
+            const data = await api.post('/auth/login', { username, password })
 
-            localStorage.setItem('access_token', access_token)
-            localStorage.setItem('refresh_token', refresh_token)
-
-            navigate('/')
+            // The response contains access_token directly
+            if (data.access_token) {
+                api.setToken(data.access_token)
+                localStorage.setItem('access_token', data.access_token)
+                localStorage.setItem('refresh_token', data.refresh_token)
+                navigate('/')
+            } else {
+                setError('Invalid response from server')
+            }
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Login failed')
+            console.error('Login error:', err)
+            setError(err.detail || err.message || 'Login failed')
         } finally {
             setLoading(false)
         }
@@ -61,7 +67,7 @@ export default function Login() {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-red-500 transition-colors"
-                                placeholder="analyst"
+                                placeholder="admin"
                             />
                         </div>
                     </div>
