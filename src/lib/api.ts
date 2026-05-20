@@ -3,20 +3,17 @@
 class ApiClient {
   private token: string | null = null;
 
+  getToken(): string | null {
+    return localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+  }
+
   setToken(token: string) {
-    this.token = token;
+    localStorage.setItem('access_token', token);
     localStorage.setItem('auth_token', token);
   }
 
-  getToken(): string | null {
-    if (!this.token) {
-      this.token = localStorage.getItem('auth_token');
-    }
-    return this.token;
-  }
-
   clearToken() {
-    this.token = null;
+    localStorage.removeItem('access_token');
     localStorage.removeItem('auth_token');
   }
 
@@ -36,41 +33,27 @@ class ApiClient {
 
     if (response.status === 401) {
       this.clearToken();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
+      window.location.href = '/login';
       throw new Error('Unauthorized');
     }
 
-    return response;
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    return response.json();
   }
 
   async get(endpoint: string) {
-    const response = await this.request(endpoint);
-    return response.json();
+    return this.request(endpoint);
   }
 
   async post(endpoint: string, data: any) {
-    const response = await this.request(endpoint, {
+    return this.request(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return response.json();
-  }
-
-  async put(endpoint: string, data: any) {
-    const response = await this.request(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-    return response.json();
-  }
-
-  async delete(endpoint: string) {
-    const response = await this.request(endpoint, {
-      method: 'DELETE',
-    });
-    return response.json();
   }
 }
 

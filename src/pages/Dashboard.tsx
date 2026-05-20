@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Trophy, TrendingUp, Users, Activity, Zap, Gauge } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import PredictionChart from '../components/charts/PredictionChart'
-import { apiClient as api } from '../lib/api'
+import { api } from '../lib/api'  // Make sure this import is correct
 
 interface DashboardStats {
     total_races: number
@@ -15,7 +15,7 @@ interface DashboardStats {
 interface Prediction {
     driver_id: number
     driver_name: string
-    probability: number
+    winner_probability: number  // Note: the API returns winner_probability, not probability
     confidence_tier: string
     team_color?: string
 }
@@ -25,17 +25,17 @@ export default function Dashboard() {
 
     const { data: health } = useQuery({
         queryKey: ['health'],
-        queryFn: () => api.get('/health').then(r => r.data).catch(() => ({ status: 'offline' }))
+        queryFn: () => api.get('/health').catch(() => ({ status: 'offline' }))
     })
 
     const { data: races } = useQuery({
         queryKey: ['races'],
-        queryFn: () => api.get('/data/races?year=2025').then(r => r.data).catch(() => [])
+        queryFn: () => api.get('/data/races?year=2025').catch(() => [])
     })
 
     const { data: predictions } = useQuery({
         queryKey: ['predictions', selectedRace],
-        queryFn: () => api.get(`/predict/race/${selectedRace}`).then(r => r.data),
+        queryFn: () => api.get(`/predict/race/${selectedRace}`),
         enabled: !!selectedRace
     })
 
@@ -108,7 +108,7 @@ export default function Dashboard() {
                 )}
             </div>
 
-            {/* Prediction Podium — CSS Version (No Three.js) */}
+            {/* Prediction Podium */}
             {predictions && predictions.length > 0 && (
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -132,7 +132,6 @@ export default function Dashboard() {
                                         'border-orange-700/50'
                                     }`}
                             >
-                                {/* Position Badge */}
                                 <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold ${index === 0 ? 'bg-yellow-500 text-black' :
                                     index === 1 ? 'bg-gray-400 text-black' :
                                         'bg-orange-700 text-white'
@@ -144,7 +143,7 @@ export default function Dashboard() {
                                     <h3 className="text-xl font-bold text-white">{pred.driver_name}</h3>
                                     <div className="mt-4">
                                         <div className="text-4xl font-black" style={{ color: pred.team_color || '#ef4444' }}>
-                                            {(pred.probability * 100).toFixed(1)}%
+                                            {((pred.winner_probability || pred.probability) * 100).toFixed(1)}%
                                         </div>
                                         <div className="text-sm text-slate-400 mt-1">Win Probability</div>
                                     </div>
@@ -155,7 +154,7 @@ export default function Dashboard() {
                                                 className="h-full rounded-full"
                                                 style={{ backgroundColor: pred.team_color || '#ef4444' }}
                                                 initial={{ width: 0 }}
-                                                animate={{ width: `${pred.probability * 100}%` }}
+                                                animate={{ width: `${(pred.winner_probability || pred.probability) * 100}%` }}
                                                 transition={{ duration: 1, delay: index * 0.2 }}
                                             />
                                         </div>
